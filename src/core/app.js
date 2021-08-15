@@ -3,7 +3,7 @@ import { Memory } from './memory'
 import { ESUCCESS, getImportObject, RAF_PROC_EXIT_CODE } from './shared'
 
 export class App {
-  constructor(moduleFactory, memfs, name, ...args) {
+  constructor(module, memfs, name, ...args) {
     this.argv = [name, ...args]
     this.environ = { USER: 'alice' }
     this.memfs = memfs
@@ -27,8 +27,8 @@ export class App {
     // Fill in some WASI implementations from memfs.
     Object.assign(wasi_unstable, this.memfs.exports)
 
-    this.ready = moduleFactory({ wasi_unstable, env }).then((exports) => {
-      this.exports = exports
+    this.ready = WebAssembly.instantiate(module, { wasi_unstable, env }).then((instance) => {
+      this.exports = instance.exports
       this.mem = new Memory(this.exports.memory)
       this.memfs.hostMem = this.mem
     })

@@ -3,12 +3,13 @@ import { MemFS } from './memfs'
 import { msToSec } from './shared'
 import { Tar } from './tar'
 
-import clangFactory from '../assets/clang.wasm'
-import lldFactory from '../assets/lld.wasm'
+import clangUrl from '../assets/clang.wasm?url'
+import lldUrl from '../assets/lld.wasm?url'
 import sysrootUrl from '../assets/sysroot.tar?url'
 
 export class API {
   constructor(options) {
+    this.moduleCache = {}
     this.hostWrite = options.hostWrite
     this.showTiming = options.showTiming || false
 
@@ -35,6 +36,19 @@ export class API {
     this.ready = this.memfs.ready.then(() => {
       return this.untar(this.memfs, sysrootUrl)
     })
+  }
+
+  async getModule(name) {
+    if (this.moduleCache[name]) return this.moduleCache[name]
+    const module = await this.hostLogAsync(
+      `Fetching and compiling ${name}`,
+      (async () => {
+        const response = await fetch(name)
+        return WebAssembly.compile(await response.arrayBuffer())
+      })()
+    )
+    this.moduleCache[name] = module
+    return module
   }
 
   hostLog(message) {
@@ -74,8 +88,9 @@ export class API {
 
     await this.ready
     this.memfs.addFile(input, contents)
+    const clang = await this.getModule(clangUrl)
     return await this.run(
-      clangFactory,
+      clang,
       'clang',
       '-cc1',
       '-emit-obj',
@@ -89,36 +104,6 @@ export class API {
     )
   }
 
-  async compileToAssembly(options) {
-    const input = options.input
-    const output = options.output
-    const contents = options.contents
-    const obj = options.obj
-    const triple = options.triple || 'x86_64'
-    const opt = options.opt || '2'
-
-    await this.ready
-    this.memfs.addFile(input, contents)
-    const clang = await this.getModule(this.clangFilename)
-    await this.run(
-      clang,
-      'clang',
-      '-cc1',
-      '-S',
-      ...this.clangCommonArgs,
-      `-triple=${triple}`,
-      '-mllvm',
-      '--x86-asm-syntax=intel',
-      `-O${opt}`,
-      '-o',
-      output,
-      '-x',
-      'c++',
-      input
-    )
-    return this.memfs.getFileContents(output)
-  }
-
   async link(obj, wasm) {
     const stackSize = 1024 * 1024
 
@@ -126,8 +111,9 @@ export class API {
     const crt1 = `${libdir}/crt1.o`
 
     await this.ready
+    const lld = await this.getModule(lldUrl)
     return await this.run(
-      lldFactory,
+      lld,
       'wasm-ld',
       '--no-threads',
       '--export-dynamic', // TODO required?
@@ -144,10 +130,10 @@ export class API {
     )
   }
 
-  async run(moduleFactory, ...args) {
+  async run(module, ...args) {
     this.hostLog(`${args.join(' ')}\n`)
     const start = +new Date()
-    const app = new App(moduleFactory, this.memfs, ...args)
+    const app = new App(module, this.memfs, ...args)
     const instantiate = +new Date()
     const stillRunning = await app.run()
     const end = +new Date()
@@ -170,11 +156,8 @@ export class API {
     await this.link(obj, wasm)
 
     const buffer = this.memfs.getFileContents(wasm)
-    return await this.run(async (inputObject) => {
-      const testMod = await WebAssembly.compile(buffer)
-      const testApp = await WebAssembly.instantiate(testMod, inputObject)
-      await this.hostLogAsync(`Compiling ${wasm}`, testMod)
-      return testApp.exports
-    }, wasm)
+    const testMod = await WebAssembly.compile(buffer)
+
+    return await this.run(testMod, wasm)
   }
 }

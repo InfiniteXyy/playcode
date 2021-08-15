@@ -1,7 +1,6 @@
-import React, { useEffect, useRef } from 'react'
-import { default as MonacoEditor } from '@monaco-editor/react'
+import React, { Suspense } from 'react'
 
-import { debounce } from 'lodash'
+const MonacoEditor = React.lazy(() => import('@monaco-editor/react'))
 
 interface EditorProps {
   defaultCode: string
@@ -11,12 +10,14 @@ export function Editor(props: EditorProps) {
   const { defaultCode, onChange } = props
 
   return (
-    <MonacoEditor
-      language="c"
-      defaultValue={defaultCode}
-      theme="vs-dark"
-      wrapperClassName="h-full"
-      onChange={(code) => onChange(code)}
-    />
+    <Suspense fallback={null}>
+      <MonacoEditor
+        language="c"
+        defaultValue={defaultCode}
+        theme="vs-dark"
+        wrapperClassName="h-full"
+        onChange={(code) => onChange(code)}
+      />
+    </Suspense>
   )
 }

@@ -1,7 +1,7 @@
 import { AbortError } from './errors.js'
 import { Memory } from './memory'
 import { assert, ESUCCESS, getImportObject } from './shared'
-import memFSFactory from '../assets/memfs.wasm'
+import memfsUrl from '../assets/memfs.wasm?url'
 
 export class MemFS {
   constructor(options) {
@@ -14,12 +14,16 @@ export class MemFS {
     // Imports for memfs module.
     const env = getImportObject(this, ['abort', 'host_write', 'host_read', 'memfs_log', 'copy_in', 'copy_out'])
 
-    this.ready = memFSFactory({ env }).then((exports) => {
-      // memfs
-      this.exports = exports
-      this.mem = new Memory(this.exports.memory)
-      this.exports.init()
-    })
+    this.ready = fetch(memfsUrl)
+      .then((result) => result.arrayBuffer())
+      .then(async (buffer) => {
+        // memfs
+        const module = await WebAssembly.compile(buffer)
+        const instance = await WebAssembly.instantiate(module, { env })
+        this.exports = instance.exports
+        this.mem = new Memory(this.exports.memory)
+        this.exports.init()
+      })
   }
 
   set hostMem(mem) {
