@@ -1,5 +1,6 @@
 import React from 'react'
 import { Container, Bar, Section } from 'react-simple-resizer'
+import useMedia from 'use-media'
 
 interface LayoutProps {
   header: React.ReactNode
@@ -9,13 +10,14 @@ interface LayoutProps {
 
 export default function Layout(props: LayoutProps) {
   const { header, left, right } = props
+  const isWide = useMedia({ minWidth: '800px' })
   return (
     <div className="h-full flex flex-col overflow-hidden">
       <header className="flex-shrink-0 shadow-md z-10">{header}</header>
-      <Container className="flex-grow h-full overflow-hidden">
+      <Container vertical={!isWide} className="flex-grow h-full overflow-hidden">
         <Section>{left}</Section>
         <Bar size={10} className="bg-dark-700" />
-        <Section className="bg-black">{right}</Section>
+        <Section>{right}</Section>
       </Container>
     </div>
   )

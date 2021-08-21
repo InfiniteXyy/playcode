@@ -21,7 +21,7 @@ export default function Terminal() {
   const messagePort = useMessagePort()
 
   const [xterm] = useState(() => {
-    return new Xterm({ fontFamily: 'Sarasa Mono, Menlo' })
+    return new Xterm()
   })
 
   useEffect(() => {
@@ -37,6 +37,7 @@ export default function Terminal() {
 
   useEffect(() => {
     if (!messagePort) return
+    xterm.clear()
     const onMessage = (event) => {
       switch (event.data.id) {
         case 'write':
@@ -47,5 +48,5 @@ export default function Terminal() {
     messagePort.onmessage = onMessage
   }, [messagePort])
 
-  return <div className="h-full" ref={containerRef} />
+  return <div className="h-full bg-black" ref={containerRef} />
 }

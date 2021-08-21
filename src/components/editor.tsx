@@ -14,7 +14,7 @@ export default function Editor() {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="h-[50px] flex items-center justify-between px-4">
+      <div className="h-[50px] flex items-center justify-between px-4 flex-shrink-0">
         <span className="font-medium text-sm text-gray-700">{`test${LanguageExt[language]}`}</span>
         <div className="flex items-center gap-2">
           <LanguageSelector />
