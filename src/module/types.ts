@@ -4,14 +4,14 @@ export enum Language {
   TypeScript = 'typescript',
 }
 
-export const LangaugeLabel: Record<Language, string> = {
+export const LanguageLabel: Record<Language, string> = {
   [Language.Cpp]: 'C++',
   [Language.Python]: 'Python',
   [Language.TypeScript]: 'TypeScript',
 }
 
 
-export const LangaugeExt: Record<Language, string> = {
+export const LanguageExt: Record<Language, string> = {
   [Language.Cpp]: '.cpp',
   [Language.Python]: '.py',
   [Language.TypeScript]: '.ts',

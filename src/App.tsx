@@ -10,11 +10,11 @@ import Header from './components/header'
 import Editor from './components/editor'
 import Terminal from './components/terminal'
 
-import { runnerModule } from './module/runner'
+import { useRunner } from './module'
 
 console.log({ clang, lld, memfs, sysroot })
 export function App() {
-  const { init } = runnerModule.useActions()
+  const { init } = useRunner(({ init }) => ({ init }))
 
   useEffect(() => {
     init()
