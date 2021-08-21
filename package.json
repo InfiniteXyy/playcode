@@ -5,8 +5,7 @@
     "dev": "vite",
     "build": "vite build",
     "serve": "vite preview",
-    "publish": "node ./scripts/publish.js",
-    "prepublish": "cross-env GH_PAGES=TRUE npm run build"
+    "publish:gh": "cross-env GH_PAGES=TRUE npm run build && node ./scripts/publish.js"
   },
   "devDependencies": {
     "@types/node": "^16.7.1",
