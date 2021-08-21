@@ -1,43 +1,39 @@
 import { defineModule } from 'zoov'
 import { persist } from 'zustand/middleware'
-import { HelloWorldCode } from '../examples'
-import CoreWorker from '../core/worker?worker'
+import { DefaultPythonCode, DefaultCppCode, DefaultTypescriptCode } from '../examples'
+import { Language } from './types'
+import { initWorker } from './utils'
 
-const channel = new MessageChannel()
-
-export const localPort = channel.port1
-/** only visible in worker */
-export const remotePort = channel.port2
-
-export enum Language {
-  Cpp = 'cpp',
-  Python = 'python',
-}
-
-export const runnerModule = defineModule({
-  code: HelloWorldCode,
+export const runnerModule = defineModule<{
+  language: Language
+  code: Record<Language, string>
+  workerMap: { [key in Language]?: { worker: Worker; messagePort: MessagePort } }
+}>({
+  code: {
+    [Language.Cpp]: DefaultCppCode,
+    [Language.Python]: DefaultPythonCode,
+    [Language.TypeScript]: DefaultTypescriptCode,
+  },
   language: Language.Cpp,
+  workerMap: {},
 })
   .actions({
-    setCode: (state, code: string) => (state.code = code),
+    setCode: (state, code: string) => (state.code[state.language] = code),
     setLanguage: (state, lang: Language) => (state.language = lang),
-  })
-  .methods((self) => ({
-    init() {
-      const worker = new CoreWorker()
-      worker.postMessage({ id: 'constructor', data: remotePort }, [remotePort])
-    },
-    runCode() {
-      const { code, language } = self.getState()
-      switch (language) {
-        case Language.Cpp:
-          localPort.postMessage({ id: 'compileLinkRun', data: code })
-          break
-        case Language.Python:
-          alert('python not supported yet')
-          break
+    init: (state) => {
+      for (const language of Object.values(Language)) {
+        state.workerMap[language] = initWorker(language)
       }
     },
+  })
+  .methods((self) => ({
+    runCode() {
+      const { code, language, workerMap } = self.getState()
+      workerMap[language].messagePort.postMessage({ id: 'compileLinkRun', data: code[language] })
+    },
   }))
-  .middleware((store) => persist(store, { name: 'runner-store', version: 0 }))
+  .computed({
+    messagePort: (state) => state.workerMap[state.language]?.messagePort,
+  })
+  .middleware((store) => persist(store, { name: 'runner-store', version: 2, blacklist: ['workerMap'] }))
   .build()

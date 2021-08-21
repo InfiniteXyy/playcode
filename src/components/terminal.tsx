@@ -3,22 +3,21 @@ import { debounce } from 'lodash'
 import { Terminal as Xterm } from 'xterm'
 import { FitAddon } from 'xterm-addon-fit'
 import 'xterm/css/xterm.css'
-import { localPort } from '../module/runner'
+import { runnerModule } from '../module/runner'
 
 export default function Terminal() {
   const containerRef = useRef<HTMLDivElement | null>(null)
+  const { messagePort } = runnerModule.useComputed()
 
   const [xterm] = useState(() => {
-    return new Xterm()
+    return new Xterm({ fontFamily: 'Sarasa Mono, Menlo' })
   })
 
   useEffect(() => {
     xterm.open(containerRef.current)
     const fitAddon = new FitAddon()
     xterm.loadAddon(fitAddon)
-    const resizeObserver = new ResizeObserver(
-      debounce(() => fitAddon.fit(), 60)
-    )
+    const resizeObserver = new ResizeObserver(debounce(() => fitAddon.fit(), 60))
     resizeObserver.observe(containerRef.current)
     return () => {
       resizeObserver.disconnect()
@@ -26,6 +25,7 @@ export default function Terminal() {
   }, [])
 
   useEffect(() => {
+    if (!messagePort) return
     const onMessage = (event) => {
       switch (event.data.id) {
         case 'write':
@@ -33,11 +33,8 @@ export default function Terminal() {
           break
       }
     }
-    localPort.addEventListener('message', onMessage)
-    return () => {
-      localPort.removeEventListener('message', onMessage)
-    }
-  }, [])
+    messagePort.onmessage = onMessage
+  }, [messagePort])
 
   return <div className="h-full" ref={containerRef} />
 }

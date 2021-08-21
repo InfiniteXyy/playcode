@@ -10,15 +10,14 @@ import Header from './components/header'
 import Editor from './components/editor'
 import Terminal from './components/terminal'
 
-import { HelloWorldCode } from './examples'
-import { localPort, runnerModule } from './module/runner'
+import { runnerModule } from './module/runner'
 
+console.log({ clang, lld, memfs, sysroot })
 export function App() {
   const { init } = runnerModule.useActions()
 
   useEffect(() => {
     init()
-    localPort.start()
   }, [])
 
   return <Layout header={<Header />} left={<Editor />} right={<Terminal />} />

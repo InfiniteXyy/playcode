@@ -4,7 +4,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "serve": "vite preview"
+    "serve": "vite preview",
+    "publish": "node ./scripts/publish.js"
   },
   "devDependencies": {
     "@types/lodash": "^4.14.172",
@@ -19,11 +20,13 @@
   },
   "prettier": {
     "singleQuote": true,
-    "semi": false
+    "semi": false,
+    "printWidth": 120
   },
   "dependencies": {
     "@headlessui/react": "^1.4.0",
     "@monaco-editor/react": "^4.2.2",
+    "clsx": "^1.1.1",
     "immer": "^9.0.5",
     "lodash": "^4.17.21",
     "react": "^17.0.2",

@@ -3,9 +3,9 @@ import { MemFS } from './memfs'
 import { msToSec } from './shared'
 import { Tar } from './tar'
 
-import clangUrl from '../assets/clang.wasm?url'
-import lldUrl from '../assets/lld.wasm?url'
-import sysrootUrl from '../assets/sysroot.tar?url'
+import clangUrl from '../../assets/clang.wasm?url'
+import lldUrl from '../../assets/lld.wasm?url'
+import sysrootUrl from '../../assets/sysroot.tar?url'
 
 export class API {
   constructor(options) {
@@ -65,9 +65,8 @@ export class API {
     if (this.showTiming) {
       const green = '\x1b[92m'
       const normal = '\x1b[0m'
-      this.hostWrite(` ${green}(${msToSec(start, end)}s)${normal}\n`)
+      this.hostWrite(` ${green}(${msToSec(start, end)}s)${normal}`)
     }
-    this.hostWrite('\n')
     return result
   }
 
@@ -131,18 +130,17 @@ export class API {
   }
 
   async run(module, ...args) {
-    this.hostLog(`${args.join(' ')}\n`)
+    this.hostLog(`${args.join(' ')}`)
     const start = +new Date()
     const app = new App(module, this.memfs, ...args)
     const instantiate = +new Date()
     const stillRunning = await app.run()
     const end = +new Date()
-    this.hostWrite('\n')
     if (this.showTiming) {
       const green = '\x1b[92m'
       const normal = '\x1b[0m'
       let msg = `${green}(${msToSec(start, instantiate)}s`
-      msg += `/${msToSec(instantiate, end)}s)${normal}\n`
+      msg += `/${msToSec(instantiate, end)}s)${normal}`
       this.hostWrite(msg)
     }
     return stillRunning ? app : null
